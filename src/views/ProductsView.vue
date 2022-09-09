@@ -18,50 +18,62 @@
           </div>
 
           <hr>
-
+          <h3>Basic CRUD (create/read/update/delete) in Firebase and Vue</h3>
           <div class="product-test">
-
-
-            <h3 class="d-inline-block">Products list</h3>
-            <!-- <button @click="addNew" class="btn btn-primary float-right">Add Product</button> -->
-
+            <div class="form-group">
+              <input type="text" placeholder="Product Name" v-model="product.name" class="form-control mb-3">
+            </div>
+            <div class="form-group">
+              <input type="text" placeholder="Price" v-model="product.price" class="form-control mb-3">
+            </div>
+            <div class="form-group">
+              <button @click="saveData" class="btn btn-primary mb-4">Save Data</button>
+            </div>
+          </div>
+          
+          <div class="product-test">
+            
+            
+            <h3 class="d-inline-block me-3">Products list</h3>
+            <button @click="addNew" class="btn btn-primary float-right mb-3">Add Product</button>
+            
             <div class="table-responsive">
               
-                <table class="table">
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Price</th>
-                      <th>Modify</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                      <!-- <tr v-for="product in products">
-                        <td>
-                          {{product.name}}
-                        </td>
-
-                        <td>
-                          {{product.price}}
-                        </td>
-
-                        <td>
-
-                          <button class="btn btn-primary" @click="editProduct(product)">Edit</button>
-                          <button class="btn btn-danger" @click="deleteProduct(product)">Delete</button>
-                        </td>
-
-                      </tr> -->
-
-
-                  </tbody>
-                </table>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Price</th>
+                    <th>Modify</th>
+                  </tr>
+                </thead>
+                
+                <tbody>
+                  <tr v-for="product in products" :key="product">
+                    <td>
+                      {{product.name}}
+                    </td>
+                    
+                    <td>
+                      {{product.price}}
+                    </td>
+                    
+                    <td>
+                      
+                      <button class="btn btn-primary me-2" @click="editProduct(product)">Edit</button>
+                      <button class="btn btn-danger" @click="deleteProduct(product)">Delete</button>
+                    </td>
+                    
+                  </tr>
+                  
+                  
+                </tbody>
+              </table>
             </div>
-
+            
           </div>
-      </div>
-
+        </div>
+        
       <!-- Modal -->
       <div class="modal fade" id="product" tabindex="-1" role="dialog" aria-labelledby="editLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
@@ -142,8 +154,9 @@
 </template>
 
 <script>
-// import { VueEditor } from "vue2-editor";
-// import { fb, db} from '../firebase';
+import $ from 'jquery'
+import {db} from '../firebase'
+import { collection, addDoc, getDocs } from "firebase/firestore"; 
 
 export default {
   name: "ProductsView",
@@ -156,17 +169,17 @@ export default {
 
   data(){
     return {
-        products: [],
-        product: {
-          name:null,
-          description:null,
-          price:null,
-          tags:[],
-          images:[]
-        },
-        activeItem:null,
-        modal: null,
-        tag: null
+      products: [],
+      product: {
+        name:null,
+        description:null,
+        price:null,
+        tags:[],
+        images:[]
+      },
+      activeItem:null,
+      modal: null,
+      tag: null
     }
   },
 
@@ -176,6 +189,15 @@ export default {
   //     }
   // },
   methods:{
+    async saveData() { 
+      try {
+        const docRef = await addDoc(collection(db, "products"), this.product);
+        console.log("Document written with ID: ", docRef.id);
+        this.reset();
+      } catch (e) {
+        console.error("Error adding document: ", e);
+      }
+    },
 
     deleteImage(img,index){
 
@@ -228,20 +250,21 @@ export default {
     },
 
     reset(){
-      this.product = {
-          name:null,
-          description:null,
-          price:null,
-          tags:[],
-          images:[]
-      }
+      // this.product = {
+      //     name:null,
+      //     description:null,
+      //     price:null,
+      //     tags:[],
+      //     images:[]
+      // }
+      Object.assign(this.$data, this.$options.data.apply(this))
     },
 
-    // addNew(){
-    //     this.modal = 'new';
-    //     this.reset();
-    //     $('#product').modal('show');
-    // },
+    addNew(){
+        // this.modal = 'new';
+        // this.reset();
+        $("#product").show();
+    },
     // updateProduct(){
     //     this.$firestore.products.doc(this.product.id).update(this.product);
     //       Toast.fire({
@@ -306,9 +329,12 @@ export default {
 
   
   // },
-  created(){
-  
-
+  async created(){
+    const querySnapshot = await getDocs(collection(db, "products"));
+    querySnapshot.forEach((doc) => {
+      console.log(doc.id, " => ", doc.data());
+      this.products.push(doc.data())
+    });
   }
 };
 </script> 
